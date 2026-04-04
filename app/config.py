@@ -1,5 +1,6 @@
 from pathlib import Path
 from typing import List
+import os
 
 from pydantic import Field, field_validator
 from pydantic_settings import BaseSettings, SettingsConfigDict
@@ -44,4 +45,9 @@ class Settings(BaseSettings):
         self.upload_path.mkdir(parents=True, exist_ok=True)
 
 
-settings = Settings()
+        try:
+            import streamlit as st
+            env_values = {k: v for k, v in st.secrets.items()}
+            settings = Settings(**env_values)
+        except Exception:
+            settings = Settings()
