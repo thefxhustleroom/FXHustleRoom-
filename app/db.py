@@ -12,10 +12,10 @@ from app.config import settings
 from app.models import AppSetting, Base, Event, User
 
 
-async_engine = create_async_engine(settings.database_url, echo=False, future=True)
+async_engine = create_async_engine(settings.database_url, echo=False, future=True)  # type: ignore[arg-type]
 AsyncSessionLocal = async_sessionmaker(async_engine, expire_on_commit=False, class_=AsyncSession)
 
-sync_engine = create_engine(settings.database_sync_url, future=True)
+sync_engine = create_engine(settings.database_sync_url, future=True)  # type: ignore[arg-type]
 
 
 def get_sync_session() -> Session:
