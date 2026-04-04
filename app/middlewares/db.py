@@ -1,23 +1,21 @@
 from __future__ import annotations
 
-import os
-from sqlalchemy.ext.asyncio import create_async_engine, async_sessionmaker
-from sqlalchemy.orm import declarative_base
+from collections.abc import Awaitable, Callable
+from typing import Any
 
-DATABASE_URL = os.getenv("DATABASE_URL")
-print("DATABASE_URL:", os.getenv("DATABASE_URL"))
+from aiogram import BaseMiddleware
+from aiogram.types import TelegramObject
 
-if not DATABASE_URL:
-    raise RuntimeError("DATABASE_URL environment variable is not set")
+from app.db import AsyncSessionLocal
 
-if DATABASE_URL.startswith("postgresql://"):
-    DATABASE_URL = DATABASE_URL.replace("postgresql://", "postgresql+asyncpg://", 1)
 
-async_engine = create_async_engine(DATABASE_URL, echo=False)
-
-AsyncSessionLocal = async_sessionmaker(
-    async_engine,
-    expire_on_commit=False
-)
-
-Base = declarative_base()
+class DbSessionMiddleware(BaseMiddleware):
+    async def __call__(
+        self,
+        handler: Callable[[TelegramObject, dict[str, Any]], Awaitable[Any]],
+        event: TelegramObject,
+        data: dict[str, Any],
+    ) -> Any:
+        async with AsyncSessionLocal() as session:
+            data["session"] = session
+            return await handler(event, data)
