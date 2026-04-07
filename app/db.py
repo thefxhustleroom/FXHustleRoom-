@@ -1,9 +1,11 @@
 from __future__ import annotations
 
+import asyncio
 import json
 from collections.abc import AsyncGenerator
 from typing import Any
 
+from loguru import logger
 from sqlalchemy import create_engine, select
 from sqlalchemy.ext.asyncio import AsyncSession, async_sessionmaker, create_async_engine
 from sqlalchemy.orm import Session
@@ -27,10 +29,20 @@ async def get_session() -> AsyncGenerator[AsyncSession, None]:
         yield session
 
 
-async def init_db() -> None:
-    async with async_engine.begin() as conn:
-        await conn.run_sync(Base.metadata.create_all)
-    await seed_default_settings()
+async def init_db(retries: int = 5, delay: float = 2.0) -> None:
+    for attempt in range(1, retries + 1):
+        try:
+            logger.info(f"Database init attempt {attempt}/{retries}...")
+            async with async_engine.begin() as conn:
+                await conn.run_sync(Base.metadata.create_all)
+            await seed_default_settings()
+            logger.info("Database initialized successfully")
+            return
+        except Exception as exc:
+            logger.warning(f"Database init attempt {attempt}/{retries} failed: {exc}")
+            if attempt < retries:
+                await asyncio.sleep(delay)
+    raise RuntimeError(f"Database initialization failed after {retries} attempts")
 
 
 async def seed_default_settings() -> None:
