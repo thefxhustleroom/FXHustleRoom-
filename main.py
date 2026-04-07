@@ -125,6 +125,11 @@ async def main() -> None:
         logger.error(f"Database initialization failed during startup: {exc}. "
                      "The app will start anyway; DB will be retried on first request.")
 
+    # Close any active webhook before starting polling
+    await bot.session.close()
+    await bot.delete_webhook(drop_pending_updates=True)
+    await bot.session.close()
+
     logger.info("Starting Telegram bot polling and webhook API")
 
     await asyncio.gather(
