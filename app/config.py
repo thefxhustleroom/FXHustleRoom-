@@ -22,7 +22,11 @@ class Settings(BaseSettings):
     trading_video_file_id: str | None = Field(default=None, alias="TRADING_VIDEO_FILE_ID")
     first_signal_text: str = Field(default="XAUUSD BUY, Entry: 2320.50, Stop Loss: 2315.00, Take Profit 1: 2325.00, Take Profit 2: 2330.00, Risk: 1.0%", alias="FIRST_SIGNAL_TEXT")
 
-    model_config = SettingsConfigDict(extra="ignore")
+    model_config = SettingsConfigDict(
+        extra="ignore",
+        env_file=".env",
+        case_sensitive=False
+    )
 
     @field_validator("admin_chat_ids", mode="before")
     @classmethod
